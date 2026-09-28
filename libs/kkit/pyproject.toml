@@ -1,0 +1,10 @@
+[project]
+name = "kkit"
+version = "0.1.0"
+description = "Shared Kaggle utilities"
+requires-python = ">=3.11"
+dependencies = ["numpy", "pandas", "scikit-learn"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

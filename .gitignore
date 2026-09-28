@@ -1,0 +1,26 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+
+# data & artifacts
+data/
+outputs/
+models/
+*.zip
+*.parquet
+*.feather
+*.npy
+*.npz
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.onnx
+
+# C/C++ build
+build/
+*.o
+*.so

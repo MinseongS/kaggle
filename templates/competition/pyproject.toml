@@ -1,0 +1,11 @@
+[project]
+name = "comp-__SLUG__"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["kkit"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+kkit = { path = "../../libs/kkit", editable = true }
