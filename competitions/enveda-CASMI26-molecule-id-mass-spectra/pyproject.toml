@@ -1,0 +1,11 @@
+[project]
+name = "comp-enveda-CASMI26-molecule-id-mass-spectra"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["kkit"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+kkit = { path = "../../libs/kkit", editable = true }

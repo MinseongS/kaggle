@@ -1,0 +1,27 @@
+{
+  "id": "ahmedberatozer/casmi26-v2-baseline",
+  "id_no": 135261109,
+  "title": "casmi26 v2 : Baseline ",
+  "code_file": "casmi26-v2-baseline.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "",
+    "",
+    "metric/rdkit-2026-3-3-wheel"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [
+    "enveda-CASMI26-molecule-id-mass-spectra"
+  ],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-images/python@sha256:dafd4ce5668bbf1ad422e4c109e0f18c9623c3a7c7f48b0235f13142755c40b9",
+  "machine_shape": "NvidiaTeslaT4"
+}
