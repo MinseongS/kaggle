@@ -1,0 +1,21 @@
+{
+  "id": "sorokin/pip-install-unsloth-flash-patch",
+  "id_no": 97546973,
+  "title": "pip-install-unsloth-flash-patch",
+  "code_file": "pip-install-unsloth-flash-patch.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [
+    "utility script"
+  ],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:320043e14c68293f1c946585b9257123385205a58af4b94b17d31868cae4e868",
+  "machine_shape": "NvidiaTeslaT4"
+}
