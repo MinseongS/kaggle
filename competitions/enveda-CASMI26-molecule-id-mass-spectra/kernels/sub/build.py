@@ -9,6 +9,7 @@ from pathlib import Path
 ap = argparse.ArgumentParser()
 ap.add_argument("--ranker", choices=["rank_train", "cv"], default="rank_train")
 ap.add_argument("--cv-tag", default="exp000")
+ap.add_argument("--cpu", action="store_true", help="CPU session (GPU batch sessions are capped at 2)")
 args = ap.parse_args()
 
 HERE = Path(__file__).parent
@@ -47,12 +48,13 @@ os.environ["CASMI_DATA"] = str(data)
 os.environ["CASMI_OUTPUTS"] = "/kaggle/working/outputs"
 # Caches are ~1GB; keep them out of /kaggle/working so they aren't saved as notebook output.
 os.environ["CASMI_CACHE"] = "/tmp/casmi_cache"
-# CV feature rows (for --ranker cv) live in outputs/cv/<tag>/feats.pkl.
-for tag_dir in glob.glob("/kaggle/input/**/casmi26-cv-feats/*/", recursive=True):
-    dst = Path("/kaggle/working/outputs/cv") / Path(tag_dir).name
+# CV feature rows (for --ranker cv) must sit at outputs/cv/<tag>/feats.pkl.
+feats = glob.glob("/kaggle/input/**/casmi26-cv-feats/**/feats.pkl", recursive=True)
+if feats:
+    dst = Path("/kaggle/working/outputs/cv") / {args.cv_tag!r} / "feats.pkl"
     dst.parent.mkdir(parents=True, exist_ok=True)
-    if not dst.exists():
-        dst.symlink_to(tag_dir)
+    dst.unlink(missing_ok=True); dst.symlink_to(feats[0])
+    print("cv feats:", feats[0])
 sys.path.insert(0, "/kaggle/working")
 print(comp, sorted(os.listdir(data / "ext")))
 '''
@@ -88,9 +90,9 @@ out = HERE / "notebook"; out.mkdir(exist_ok=True)
 (out / f"{SLUG}.ipynb").write_text(json.dumps(nb, indent=1, ensure_ascii=False))
 (out / "kernel-metadata.json").write_text(json.dumps({
     "id": f"mins00/{SLUG}", "title": SLUG, "code_file": f"{SLUG}.ipynb", "language": "python",
-    "kernel_type": "notebook", "is_private": True, "enable_gpu": True, "enable_tpu": False,
+    "kernel_type": "notebook", "is_private": True, "enable_gpu": not args.cpu, "enable_tpu": False,
     "enable_internet": False,
     "dataset_sources": EXT_DATASETS + ["metric/rdkit-2026-3-3-wheel"] + (["mins00/casmi26-cv-feats"] if args.ranker == "cv" else []),
-    "kernel_sources": [], "competition_sources": [COMP], "model_sources": [], "machine_shape": "NvidiaTeslaT4",
+    "kernel_sources": [], "competition_sources": [COMP], "model_sources": [], **({} if args.cpu else {"machine_shape": "NvidiaTeslaT4"}),
 }, indent=2))
 print("built", out, len(cells), "cells")

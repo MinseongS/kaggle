@@ -1,0 +1,18 @@
+{
+  "id": "mins00/casmi26-train-fpnet-single",
+  "title": "casmi26-train-fpnet-single",
+  "code_file": "casmi26-train-fpnet-single.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "mins00/casmi26-fptrain-v1"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "machine_shape": "NvidiaTeslaT4"
+}
