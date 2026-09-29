@@ -1,0 +1,9 @@
+# build artifacts (icecuber C++)
+icecuber/obj/
+icecuber/run
+icecuber/count_tasks
+icecuber/headers/*.gch
+icecuber/output/
+icecuber/store/
+dist/
+icecuber/headers/*.pch
