@@ -39,6 +39,8 @@ def main(argv=None):
     c.add_argument('--n-np', type=int, default=200); c.add_argument('--n-e180', type=int, default=300)
     c.add_argument('--seed', type=int, default=0); c.add_argument('--tag', default='exp000')
     c.add_argument('--no-reuse', action='store_true')
+    c.add_argument('--holdout', choices=['cv', 'all'], default=None,
+                   help='fixed list from holdout_v1.json (cv == exp000 molecules) instead of sampling')
     p = sub.add_parser('predict')
     p.add_argument('--ranker', choices=['rank_train', 'cv'], default='rank_train')
     p.add_argument('--cv-tag', default='exp000')
@@ -46,12 +48,16 @@ def main(argv=None):
     for s in (c, p):
         s.add_argument('--device', default='cpu'); s.add_argument('--no-fp', action='store_true')
         s.add_argument('--no-frag', action='store_true'); s.add_argument('--workers', type=int, default=None)
+        s.add_argument('--fp-dir', default=None, help='directory with fp_*.pt (default: data/ext/casmi26-fp-models-v2)')
     a = ap.parse_args(argv)
     cfg = config.CFG()
     if getattr(a, 'workers', None): cfg.WORKERS = a.workers
     if getattr(a, 'device', None): cfg.DEVICE = a.device
     if getattr(a, 'no_fp', False): cfg.USE_FP_MODEL = False
     if getattr(a, 'no_frag', False): cfg.USE_FRAG = False
+    if getattr(a, 'fp_dir', None):
+        from pathlib import Path
+        config.FP_MODEL_DIR = Path(a.fp_dir)
     T0 = time.time()
     if a.cmd == 'build':
         from .candidates import build_train_fp_cache
@@ -61,7 +67,7 @@ def main(argv=None):
         from .cv import run_cv
         E = _engine(cfg)
         print(f'engine ready {time.time()-T0:.0f}s', flush=True)
-        run_cv(E, cfg, a.n_np, a.n_e180, a.seed, a.tag, reuse=not a.no_reuse)
+        run_cv(E, cfg, a.n_np, a.n_e180, a.seed, a.tag, reuse=not a.no_reuse, holdout=a.holdout)
     elif a.cmd == 'predict':
         from . import submit
         from .ranker import Ranker

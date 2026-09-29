@@ -41,11 +41,11 @@ FP_COLS = list(range(15, 21)) + list(range(25, 31))
 
 
 # --------------------------------------------------------------------------------------------- holdout
-def select_holdout(L, n_np=200, n_e180=300, seed=0):
+def select_holdout(L, n_np=200, n_e180=300, seed=0, exclude_mkeys=()):
     rng = np.random.default_rng(seed)
     te = pl.read_parquet(config.TEST, columns=['molecule_id'])
     k_dist = te.group_by('molecule_id').len()['len'].to_numpy()
-    chosen, used_mkeys = [], set()
+    chosen, used_mkeys = [], set(exclude_mkeys)
     for lib, n in ((NP_LIB, n_np), (E180_LIB, n_e180)):
         sids = np.unique(L.sid[L.lib == lib])
         rng.shuffle(sids)
@@ -255,7 +255,16 @@ def summarize(recs, res, single):
     return table, '\n'.join(lines)
 
 
-def run_cv(E, cfg, n_np=200, n_e180=300, seed=0, tag='exp000', reuse=True):
+def fixed_holdout(which='cv'):
+    """Fixed held-out list shared with FPNet training (src/casmi/holdout_v1.json, see train_fpnet.make_holdout).
+    'cv' = the exp000 molecules (250 np-examples + 250 enveda-180); 'all' = cv + the extra enveda-180 molecules.
+    Every metric key in 'all' is excluded from the retrained FPNet (fp_*_h1.pt), so CV on it is FP-leak-free."""
+    from .train_fpnet import load_holdout
+    H = load_holdout()
+    return H['cv'] + (H['extra'] if which == 'all' else [])
+
+
+def run_cv(E, cfg, n_np=200, n_e180=300, seed=0, tag='exp000', reuse=True, holdout=None):
     outdir = config.OUTPUTS / 'cv' / tag
     outdir.mkdir(parents=True, exist_ok=True)
     fpath = outdir / 'feats.pkl'
@@ -265,7 +274,7 @@ def run_cv(E, cfg, n_np=200, n_e180=300, seed=0, tag='exp000', reuse=True):
         recs = pickle.load(open(fpath, 'rb')); tim = {}
         print(f'reusing {fpath} ({len(recs)} molecules)')
     else:
-        hold = select_holdout(E.L, n_np, n_e180, seed)
+        hold = fixed_holdout(holdout) if holdout else select_holdout(E.L, n_np, n_e180, seed)
         print(f'holdout: {len(hold)} molecules ({sum(h["src_lib"] == NP_LIB for h in hold)} np-examples, '
               f'{sum(h["eligible_A"] for h in hold)} A-eligible)', flush=True)
         raw = load_query_rows([i for h in hold for i in h['q_rows']])
