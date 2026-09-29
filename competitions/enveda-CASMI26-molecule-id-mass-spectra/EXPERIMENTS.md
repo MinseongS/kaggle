@@ -6,4 +6,4 @@
 | 2026-09-28 | exp000-noFP | exp000 에서 FPNet 피처 0 으로 두고 ranker 재학습 (같은 피처 캐시) | np: A 0.799 / B 0.590 → 가중 0.394. e180: B 0.896 → 0.532 | — | FPNet 기여 (np, B): +0.028. e180 은 FP 없이도 0.90 → e180 은 쉬운 분포 (합성 라이브러리의 가까운 analog), 판단 기준으로 쓰지 말 것 |
 | 2026-09-28 | exp000-ref | 같은 피처에 rank_train.npz ranker (누수 참고용) | np: A 0.834 / B 0.674 → 가중 0.437 | — | fold 재학습 대비 np B +0.055 → rank_train.npz 는 np-examples 로 학습된 것으로 보임. CV 에서 쓰면 안 됨 |
 | 2026-09-29 | exp000-sub | exp000 을 Kaggle 노트북으로 제출 (rank_train.npz ranker) | 가중 0.406 | **0.331** | 원본 0.328~0.335 재현. Kaggle 빌드 33분 + 예측 21분. ref 56658747 |
-| 2026-09-29 | exp001-sub | ranker 를 누수 없는 CV rows (exp000 feats) 로 다시 fit | — | pending | CPU 세션 (GPU batch 세션 2개 한도). ref 56662075 |
+| 2026-09-29 | exp001-sub | ranker 를 누수 없는 CV rows (exp000 feats) 로 다시 fit | — | **0.322** (-0.009, 노이즈 수준) | CPU 세션. ref 56662075. 500분자뿐이고 e180 절반에 FPNet 누수 → ranker 가 FP 를 과신했을 가능성. 당분간 rank_train 유지 |
