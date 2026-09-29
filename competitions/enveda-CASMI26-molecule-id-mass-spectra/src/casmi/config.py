@@ -10,9 +10,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = Path(os.environ.get("CASMI_DATA", ROOT / "data"))
-EXT = DATA / "ext"
-CACHE = DATA / "cache"
-OUTPUTS = ROOT / "outputs"
+EXT = Path(os.environ.get("CASMI_EXT", DATA / "ext"))
+CACHE = Path(os.environ.get("CASMI_CACHE", DATA / "cache"))
+OUTPUTS = Path(os.environ.get("CASMI_OUTPUTS", ROOT / "outputs"))
 
 TRAIN = DATA / "train.parquet"
 TEST = DATA / "test.parquet"
