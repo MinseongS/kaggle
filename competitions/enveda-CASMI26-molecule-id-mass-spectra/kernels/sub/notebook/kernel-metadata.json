@@ -13,7 +13,8 @@
     "prvsiyan/casmi26-ranker-features",
     "prvsiyan/chebi-lipidmaps-casmi26",
     "prvsiyan/coconut-casmi26-candidates",
-    "metric/rdkit-2026-3-3-wheel"
+    "metric/rdkit-2026-3-3-wheel",
+    "mins00/casmi26-cv-feats"
   ],
   "kernel_sources": [],
   "competition_sources": [

@@ -1,6 +1,15 @@
-"""Assemble the Kaggle submission notebook from src/casmi. Run: uv run python kernels/sub/build.py"""
+"""Assemble the Kaggle submission notebook from src/casmi.
+
+Run: uv run python kernels/sub/build.py [--ranker rank_train|cv] [--cv-tag exp000]
+"""
+import argparse
 import json
 from pathlib import Path
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--ranker", choices=["rank_train", "cv"], default="rank_train")
+ap.add_argument("--cv-tag", default="exp000")
+args = ap.parse_args()
 
 HERE = Path(__file__).parent
 SRC = HERE.parents[1] / "src" / "casmi"
@@ -36,6 +45,14 @@ for name in {[d.split("/")[1] for d in EXT_DATASETS]!r}:
     (data / "ext" / name).unlink(missing_ok=True); (data / "ext" / name).symlink_to(src)
 os.environ["CASMI_DATA"] = str(data)
 os.environ["CASMI_OUTPUTS"] = "/kaggle/working/outputs"
+# Caches are ~1GB; keep them out of /kaggle/working so they aren't saved as notebook output.
+os.environ["CASMI_CACHE"] = "/tmp/casmi_cache"
+# CV feature rows (for --ranker cv) live in outputs/cv/<tag>/feats.pkl.
+for tag_dir in glob.glob("/kaggle/input/**/casmi26-cv-feats/*/", recursive=True):
+    dst = Path("/kaggle/working/outputs/cv") / Path(tag_dir).name
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if not dst.exists():
+        dst.symlink_to(tag_dir)
 sys.path.insert(0, "/kaggle/working")
 print(comp, sorted(os.listdir(data / "ext")))
 '''
@@ -52,8 +69,9 @@ cells += [
          "from casmi.cli import main\n"
          "main(['build'])\n"
          "print(f'build {time.time()-t0:.0f}s')"),
-    code("t0 = time.time()\n"
-         "main(['predict', '--ranker', 'rank_train', '--device', 'cuda' if __import__('torch').cuda.is_available() else 'cpu',\n"
+    code(f"RANKER, CV_TAG = {args.ranker!r}, {args.cv_tag!r}\n"
+         "t0 = time.time()\n"
+         "main(['predict', '--ranker', RANKER, '--cv-tag', CV_TAG, '--device', 'cuda' if __import__('torch').cuda.is_available() else 'cpu',\n"
          "      '--out', '/kaggle/working/submission.csv'])\n"
          "print(f'predict {time.time()-t0:.0f}s')"),
     code("import polars as pl\n"
@@ -71,7 +89,8 @@ out = HERE / "notebook"; out.mkdir(exist_ok=True)
 (out / "kernel-metadata.json").write_text(json.dumps({
     "id": f"mins00/{SLUG}", "title": SLUG, "code_file": f"{SLUG}.ipynb", "language": "python",
     "kernel_type": "notebook", "is_private": True, "enable_gpu": True, "enable_tpu": False,
-    "enable_internet": False, "dataset_sources": EXT_DATASETS + ["metric/rdkit-2026-3-3-wheel"],
+    "enable_internet": False,
+    "dataset_sources": EXT_DATASETS + ["metric/rdkit-2026-3-3-wheel"] + (["mins00/casmi26-cv-feats"] if args.ranker == "cv" else []),
     "kernel_sources": [], "competition_sources": [COMP], "model_sources": [], "machine_shape": "NvidiaTeslaT4",
 }, indent=2))
 print("built", out, len(cells), "cells")
