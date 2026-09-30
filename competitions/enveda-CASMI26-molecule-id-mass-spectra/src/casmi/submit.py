@@ -74,24 +74,40 @@ def test_queries(path=config.TEST):
 
 
 def predict_test(E, ranker, queries, cfg, log_every=50):
+    """Rankers with a `prepare`/`features` pair (rows_v2.RankerV2) get a two-pass run: all candidate windows
+    first, then one batched descriptor pass, then ranking. Other rankers score c['X'] (the 31 columns) directly."""
     rows, diag = {}, []
     t0 = time.time()
+    two_pass = hasattr(ranker, 'prepare')
+    wins = []
     for gi, (mid, q) in enumerate(queries.items()):
-        smis = []
+        c = z = None
         if q is not None:
             lib = E.lib_sim(q); an = E.analog_sim(q); z = E.logits(q)
             c = E.candidates(q, lib, an, z)
-            if c is not None:
-                p = ranker.predict(c['X'])
-                order = np.argsort(-p)
-                ranked = [c["smiles"][i] for i in order]
-                smis, _ = select(ranked, cfg.TOPN)
-                diag.append(dict(molecule_id=mid, target=q.target, n_cand=len(c['smiles']), lib_max=float(c['lv'].max()),
-                                 top_analog=c['top_analog'], top_p=float(p[order[0]])))
-        rows[mid] = smis or [FALLBACK]
+        if two_pass:
+            wins.append((mid, q, c, z))
+        else:
+            rows[mid] = _rank_one(mid, q, c, ranker.predict(c['X']) if c is not None else None, cfg, diag)
         if gi % log_every == 0:
             print(f'  {gi}/{len(queries)}  {time.time()-t0:.0f}s', flush=True)
+    if two_pass:
+        ranker.prepare(E, [(q, c, z) for _, q, c, z in wins], cache=config.CACHE / 'prior_desc_test.pkl')
+        for mid, q, c, z in wins:
+            p = ranker.predict(ranker.features(E, q, c, z)) if c is not None else None
+            rows[mid] = _rank_one(mid, q, c, p, cfg, diag)
+        print(f'  ranked {len(wins)} ({time.time()-t0:.0f}s)', flush=True)
     return rows, diag
+
+
+def _rank_one(mid, q, c, p, cfg, diag):
+    smis = []
+    if c is not None:
+        order = np.argsort(-p)
+        smis, _ = select([c["smiles"][i] for i in order], cfg.TOPN)
+        diag.append(dict(molecule_id=mid, target=q.target, n_cand=len(c['smiles']), lib_max=float(c['lv'].max()),
+                         top_analog=c['top_analog'], top_p=float(p[order[0]])))
+    return smis or [FALLBACK]
 
 
 def write_submission(rows: dict, out_path, sample_path=config.SAMPLE):

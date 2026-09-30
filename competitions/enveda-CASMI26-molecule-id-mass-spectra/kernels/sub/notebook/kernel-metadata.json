@@ -14,6 +14,7 @@
     "prvsiyan/chebi-lipidmaps-casmi26",
     "prvsiyan/coconut-casmi26-candidates",
     "metric/rdkit-2026-3-3-wheel",
+    "mins00/casmi26-ranker-rows-v2",
     "mins00/casmi26-fp-models-h1"
   ],
   "kernel_sources": [],

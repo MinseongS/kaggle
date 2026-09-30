@@ -1,13 +1,18 @@
 """Assemble the Kaggle submission notebook from src/casmi.
 
-Run: uv run python kernels/sub/build.py [--ranker rank_train|cv] [--cv-tag exp000]
+Run: uv run python kernels/sub/build.py [--ranker rank_train|cv|v2] [--cv-tag exp000]
+     v2: uv run python kernels/sub/build.py --ranker v2 --fp-dataset mins00/casmi26-fp-models-h1 [--cpu]
+         (needs the private dataset mins00/casmi26-ranker-rows-v2 = rows.npz + meta.json from casmi.rows_v2 build)
 """
 import argparse
 import json
 from pathlib import Path
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--ranker", choices=["rank_train", "cv"], default="rank_train")
+ap.add_argument("--ranker", choices=["rank_train", "cv", "v2"], default="rank_train")
+ap.add_argument("--rows-dataset", default="mins00/casmi26-ranker-rows-v2", help="v2: Kaggle dataset with rows.npz + meta.json")
+ap.add_argument("--v2-model", choices=["blend", "hgb", "lgb"], default="blend")
+ap.add_argument("--v2-cols", choices=["all", "base"], default="all")
 ap.add_argument("--cv-tag", default="exp000")
 ap.add_argument("--fp-dataset", default=None, help="Kaggle dataset with fp_*.pt to use instead of the public FPNet weights")
 ap.add_argument("--cpu", action="store_true", help="CPU session (GPU batch sessions are capped at 2)")
@@ -62,6 +67,10 @@ FP_DIR = None
 if {args.fp_dataset!r} != "None":
     FP_DIR = [p for p in glob.glob("/kaggle/input/**/{(args.fp_dataset or "x/x").split("/")[1]}", recursive=True) if os.path.isdir(p)][0]
     print("fp weights:", FP_DIR, sorted(os.listdir(FP_DIR)))
+ROWS_DIR = None
+if {args.ranker!r} == "v2":
+    ROWS_DIR = str(Path(glob.glob("/kaggle/input/**/{args.rows_dataset.split("/")[1]}/**/rows.npz", recursive=True)[0]).parent)
+    print("v2 rows:", ROWS_DIR, sorted(os.listdir(ROWS_DIR)))
 '''
 
 cells = [
@@ -79,7 +88,8 @@ cells += [
     code(f"RANKER, CV_TAG = {args.ranker!r}, {args.cv_tag!r}\n"
          "t0 = time.time()\n"
          "main(['predict', '--ranker', RANKER, '--cv-tag', CV_TAG, '--device', 'cuda' if __import__('torch').cuda.is_available() else 'cpu',\n"
-         "      '--out', '/kaggle/working/submission.csv'] + (['--fp-dir', FP_DIR] if FP_DIR else []))\n"
+         "      '--out', '/kaggle/working/submission.csv'] + (['--fp-dir', FP_DIR] if FP_DIR else [])\n"
+         f"     + (['--ranker-rows', ROWS_DIR, '--v2-model', {args.v2_model!r}, '--v2-cols', {args.v2_cols!r}] if ROWS_DIR else []))\n"
          "print(f'predict {time.time()-t0:.0f}s')"),
     code("import polars as pl\n"
          "from rdkit import Chem\n"
@@ -98,6 +108,7 @@ out = HERE / "notebook"; out.mkdir(exist_ok=True)
     "kernel_type": "notebook", "is_private": True, "enable_gpu": not args.cpu, "enable_tpu": False,
     "enable_internet": False,
     "dataset_sources": EXT_DATASETS + ["metric/rdkit-2026-3-3-wheel"] + (["mins00/casmi26-cv-feats"] if args.ranker == "cv" else [])
+    + ([args.rows_dataset] if args.ranker == "v2" else [])
     + ([args.fp_dataset] if args.fp_dataset else []),
     "kernel_sources": [], "competition_sources": [COMP], "model_sources": [], **({} if args.cpu else {"machine_shape": "NvidiaTeslaT4"}),
 }, indent=2))

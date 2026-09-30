@@ -4,6 +4,7 @@
   casmi cv --n-np 200 --n-e180 300 --tag exp000
   casmi predict --ranker rank_train --out outputs/submission.csv
   casmi predict --ranker cv --cv-tag exp000 --out outputs/submission_cvranker.csv
+  casmi predict --ranker v2 --ranker-rows outputs/ranker_rows_v2 --fp-dir data/ext/casmi26-fp-models-h1
 """
 from __future__ import annotations
 
@@ -42,7 +43,10 @@ def main(argv=None):
     c.add_argument('--holdout', choices=['cv', 'all'], default=None,
                    help='fixed list from holdout_v1.json (cv == exp000 molecules) instead of sampling')
     p = sub.add_parser('predict')
-    p.add_argument('--ranker', choices=['rank_train', 'cv'], default='rank_train')
+    p.add_argument('--ranker', choices=['rank_train', 'cv', 'v2'], default='rank_train')
+    p.add_argument('--ranker-rows', default=None, help='v2: rows dir from `python -m casmi.rows_v2 build`')
+    p.add_argument('--v2-model', choices=['blend', 'hgb', 'lgb'], default='blend', help='v2: ranker kind')
+    p.add_argument('--v2-cols', choices=['all', 'base'], default='all', help='v2: base = 31 cols, all = + prior + FP-family')
     p.add_argument('--cv-tag', default='exp000')
     p.add_argument('--out', default=str(config.OUTPUTS / 'submission.csv'))
     for s in (c, p):
@@ -76,6 +80,9 @@ def main(argv=None):
         t_eng = time.time() - T0
         if a.ranker == 'rank_train':
             rk = Ranker.from_rank_train(cfg)
+        elif a.ranker == 'v2':
+            from .rows_v2 import DEFAULT_DIR, RankerV2
+            rk = RankerV2.from_rows(cfg, a.ranker_rows or DEFAULT_DIR, a.v2_model, a.v2_cols)
         else:
             from .cv import FP_COLS, cv_ranker
             rk = cv_ranker(cfg, a.cv_tag, FP_COLS if not cfg.USE_FP_MODEL else None)
@@ -83,7 +90,9 @@ def main(argv=None):
         rows, diag = submit.predict_test(E, rk, queries, cfg)
         t_pred = time.time() - t1
         df = submit.write_submission(rows, a.out)
-        meta = dict(out=a.out, ranker=a.ranker, secs_total=round(time.time() - T0), secs_setup=round(t_eng),
+        meta = dict(out=a.out, ranker=a.ranker, secs_ranker_fit=round(t1 - T0 - t_eng),
+                    **({'v2': dict(model=a.v2_model, cols=a.v2_cols, rows=str(a.ranker_rows))} if a.ranker == 'v2' else {}),
+                    fp_dir=str(config.FP_MODEL_DIR), secs_total=round(time.time() - T0), secs_setup=round(t_eng),
                     secs_predict=round(t_pred), n=len(df), mean_len=float(df['smiles'].str.split(';').list.len().mean()))
         json.dump(meta, open(a.out.replace('.csv', '.meta.json'), 'w'), indent=1)
         print(f'wrote {a.out} {df.shape}; {meta}', flush=True)
