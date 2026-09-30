@@ -20,11 +20,14 @@ class Ranker:
         self.seeds = tuple(seeds if seeds is not None else cfg.SEEDS)
         self.models = []
 
-    def fit(self, X, Y, M):
+    def fit(self, X, Y, M, sw=None):
+        """sw: optional per-row weight multiplier (e.g. up-weight np-examples molecules)."""
         t0 = time.time()
         self.models = []
         for w1 in self.priors:
             W = np.where(M == 0, w1, 1.0 - w1)
+            if sw is not None:
+                W = W * sw
             for sd in self.seeds:
                 m = HistGradientBoostingClassifier(random_state=sd, **self.cfg.GBM)
                 m.fit(X, Y, sample_weight=W)

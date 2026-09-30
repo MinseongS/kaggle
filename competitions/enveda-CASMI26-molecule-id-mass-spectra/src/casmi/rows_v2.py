@@ -27,6 +27,7 @@ import numpy as np
 from . import config
 from .features import FEATURE_NAMES, _rank_norm, _z
 
+NP_LIB = 'enveda-np-examples'
 PRIOR_GROUPS = ('desc', 'desc_rel', 'formula')
 FPB_NAMES = [f'{fam}_{k}' for fam in ('ecfp4', 'ecfp6', 'rdk', 'maccs') for k in ('z', 'rank', 'gap')] + \
             ['fpb_miss', 'fpb_extra', 'fpb_hinge_rank', 'fpb_cos_z', 'fpb_cos_rank', 'fpb_log_nvar']
@@ -219,7 +220,9 @@ def _rr(score, keys, Y, topn=25):
 
 
 def evaluate(rows_dir=DEFAULT_DIR, configs=('rank_train', 'hgb31', 'lgb31', 'blend31', 'hgb', 'lgb', 'blend'),
-             n_folds=5, seed=0, out_name='cv_rr.npz'):
+             n_folds=5, seed=0, out_name='cv_rr.npz', np_weight=1.0):
+    """np_weight: training-row weight multiplier for enveda-np-examples molecules (e180 = 1). The 1000 rows are 250 np +
+    750 e180 and e180 is much easier, while the test looks more np-like -> check whether matching that helps np CV."""
     from .cvx import LGBRank
     from .ranker import Ranker
     cfg = config.CFG()
@@ -230,6 +233,8 @@ def evaluate(rows_dir=DEFAULT_DIR, configs=('rank_train', 'hgb31', 'lgb31', 'ble
     nm = meta['n_mol']; nb = meta['n_base']
     X, Y, M, G, mol = R['X'], R['Y'], R['M'], R['G'], R['mol']
     fold = np.random.default_rng(seed).permutation(nm) % n_folds
+    libs = np.array([m['src_lib'] for m in K['mols']])
+    sw = np.where(libs[mol] == NP_LIB, np_weight, 1.0) if np_weight != 1.0 else None
     grp_idx = {g: np.where(G == g)[0] for g in np.unique(G)}
     res = {}
     prev = dict(np.load(rows_dir / out_name)) if (rows_dir / out_name).exists() else {}
@@ -259,8 +264,9 @@ def evaluate(rows_dir=DEFAULT_DIR, configs=('rank_train', 'hgb31', 'lgb31', 'ble
         need_h = 'hgb' in fam or 'blend' in fam; need_l = 'lgb' in fam or 'blend' in fam
         for f in range(n_folds):
             tr = fold[mol] != f
-            h = Ranker(cfg).fit(Xc[tr], Y[tr], M[tr]) if need_h else None
-            l = LGBRank(cfg).fit(Xc[tr], Y[tr], M[tr], G[tr]) if need_l else None
+            swt = sw[tr] if sw is not None else None
+            h = Ranker(cfg).fit(Xc[tr], Y[tr], M[tr], swt) if need_h else None
+            l = LGBRank(cfg).fit(Xc[tr], Y[tr], M[tr], G[tr], swt) if need_l else None
             ph = h.predict(Xc) if h else None      # all rows at once (per-call overhead dominates otherwise)
             pl_ = l.predict(Xc) if l else None
             for g, ix in grp_idx.items():
@@ -289,6 +295,11 @@ def _stat(rr, mask, elig):
 def report(rows_dir=DEFAULT_DIR, out_name='cv_rr.npz', base='rank_train', n_boot=2000):
     rows_dir = Path(rows_dir)
     Z = dict(np.load(rows_dir / out_name))
+    # also show variants from other runs on the same folds (e.g. cv_rr_npw3.npz -> 'blend@npw3')
+    for f in sorted(rows_dir.glob(Path(out_name).stem + '_*.npz')):
+        V = dict(np.load(f))
+        if np.array_equal(V.get('fold'), Z['fold']):
+            Z.update({f'{k}@{f.stem.split("_", 2)[-1]}': v for k, v in V.items() if k != 'fold'})
     K = pickle.load(open(rows_dir / 'keys.pkl', 'rb'))
     libs = np.array([m['src_lib'] for m in K['mols']]); elig = np.array([m['eligible_A'] for m in K['mols']])
     # A for groups with no candidates / missing window -> 0 (as in cv.py)
@@ -318,7 +329,7 @@ def report(rows_dir=DEFAULT_DIR, out_name='cv_rr.npz', base='rank_train', n_boot
                 d = np.array(d)
                 s += f' d={w - _stat(Z[base], m, elig)[0]:+.4f} (se {d.std():.4f}, P>0 {np.mean(d > 0):.2f})'
             parts.append(s)
-        lines.append(f'{k:>11} | ' + ' | '.join(parts))
+        lines.append(f'{k:>16} | ' + ' | '.join(parts))
     lines.append(f'n: np={npm.sum()} all={len(npm)} A-eligible np={int((elig & npm).sum())} all={int(elig.sum())}')
     txt = '\n'.join(lines)
     print(txt, flush=True)
@@ -334,7 +345,9 @@ def main(argv=None):
     b.add_argument('--limit', type=int, default=None)
     e = sub.add_parser('eval'); e.add_argument('--rows', default=str(DEFAULT_DIR))
     e.add_argument('--configs', default='rank_train,hgb31,lgb31,blend31,hgb,lgb,blend'); e.add_argument('--fold-seed', type=int, default=0)
+    e.add_argument('--np-weight', type=float, default=1.0)
     r = sub.add_parser('report'); r.add_argument('--rows', default=str(DEFAULT_DIR))
+    r.add_argument('--base', default='rank_train', help='row every other config is compared against')
     a = ap.parse_args(argv)
     if a.cmd == 'build':
         from .cli import _engine
@@ -347,10 +360,10 @@ def main(argv=None):
         finally:
             if E.frag is not None: E.frag.close()
     elif a.cmd == 'eval':
-        evaluate(a.rows, tuple(a.configs.split(',')), seed=a.fold_seed,
-                 out_name='cv_rr.npz' if a.fold_seed == 0 else f'cv_rr_s{a.fold_seed}.npz')
+        out = 'cv_rr' + (f'_s{a.fold_seed}' if a.fold_seed else '') + (f'_npw{a.np_weight:g}' if a.np_weight != 1.0 else '')
+        evaluate(a.rows, tuple(a.configs.split(',')), seed=a.fold_seed, out_name=out + '.npz', np_weight=a.np_weight)
     else:
-        report(a.rows)
+        report(a.rows, base=a.base)
 
 
 if __name__ == '__main__':

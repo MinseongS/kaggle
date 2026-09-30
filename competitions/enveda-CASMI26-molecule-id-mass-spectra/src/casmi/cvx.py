@@ -221,16 +221,18 @@ class LGBRank:
             self.params.update(params)
         self.n_iter = self.params.pop('n_iter', 500)
 
-    def fit(self, X, Y, M, G):
+    def fit(self, X, Y, M, G, sw=None):
+        """sw: optional per-row weight multiplier, constant within a group (e.g. per molecule source library)."""
         import lightgbm as lgb
         o = np.argsort(G, kind='stable'); X, Y, M, G = X[o], Y[o], M[o], G[o]
+        sw = np.ones(len(Y)) if sw is None else np.asarray(sw, float)[o]
         _, cnt = np.unique(G, return_counts=True)
         gm = M[np.cumsum(cnt) - 1]
         self.models = []
         for w1 in self.priors:
             gw = np.where(gm == 0, w1, 1 - w1)
             for sd in self.seeds:
-                ds = lgb.Dataset(X, Y, group=cnt, weight=np.repeat(gw, cnt))
+                ds = lgb.Dataset(X, Y, group=cnt, weight=np.repeat(gw, cnt) * sw)
                 self.models.append(lgb.train(dict(self.params, seed=sd), ds, self.n_iter))
         return self
 
