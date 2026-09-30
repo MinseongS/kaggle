@@ -46,3 +46,9 @@ if not rerun_mode:
     with open("submission.json", "r") as f:
         reload_submission = json.load(f)
     print("*** Reload score:", data.validate_submission(reload_submission))
+
+    # Keep the raw candidates for offline selection/re-scoring work (eval commit runs only).
+    import tarfile
+    with tarfile.open("/kaggle/working/inference_outputs.tar", "w") as tar:
+        tar.add("/kaggle/inference_outputs", arcname="inference_outputs")
+    print("*** saved inference_outputs.tar:", os.path.getsize("/kaggle/working/inference_outputs.tar") // 1024, "KB")
