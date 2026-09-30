@@ -19,4 +19,4 @@
 | 2026-09-29 | exp007 | LightGBM LambdaRank (분자×split 그룹, w1 prior 는 행 가중, 2 prior × 2 seed, 500 iter) 31열 | 0.4114 (+0.0056, se 0.0047). dA −0.008 / dB +0.015 | — | 115초 (HGB 대비 ~10배 빠름). fold seed 1/2: 0.4132/0.4158 → fold 분할 노이즈 ±0.002 |
 | 2026-09-29 | exp008 | LambdaRank + prior + fpblock | 0.4148 (+0.0090 vs cvx-base) | — | LambdaRank 기준으로는 prior+fpblock 이득 거의 없음: fold seed 0/1/2 에서 +0.0034/−0.0001/−0.0013. 파라미터 7개 (leaves 15/63, min_leaf 200, iter 250/1000, ff 0.5, trunc 10) 모두 ±0.003 안 → 기본값 유지 |
 | 2026-09-29 | exp011 | HGB + LambdaRank 창 내 rank 평균 blend, prior + fpblock | **0.4164 (+0.0107, se 0.0067, P>0 0.95)**. A 0.789 / B 0.645, e180 B +0.013 | — | 최고. blend 만 (31열, exp012) 은 0.4079 (+0.0021) → blend 와 추가 피처가 서로 보완 |
-| 2026-09-29 | exp003-sub | exp000 + FPNet h1 가중치 (누수 없이 재학습), ranker 는 rank_train | 0.410 (exp002) | pending | CPU 세션, 예측 23분. kernel v4 |
+| 2026-09-29 | exp003-sub | exp000 + FPNet h1 가중치 (누수 없이 재학습), ranker 는 rank_train | 0.410 (exp002) | **0.313** (-0.018 vs exp000) | CPU 세션, 예측 23분. kernel v4 |
