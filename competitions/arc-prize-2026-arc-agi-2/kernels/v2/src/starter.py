@@ -90,9 +90,9 @@ if __name__ == "__main__":
     rerun_mode = os.getenv("KAGGLE_IS_COMPETITION_RERUN")
 
     if rerun_mode:
-        test_path = "/kaggle/input/competitions/arc-prize-2026-arc-agi-2/arc-agi_test_challenges.json"
+        test_path = os.environ.get("ARC_COMP_DIR", "/kaggle/input/competitions/arc-prize-2026-arc-agi-2") + "/arc-agi_test_challenges.json"
     else:
-        test_path = "/kaggle/input/competitions/arc-prize-2026-arc-agi-2/arc-agi_evaluation_challenges.json"
+        test_path = os.environ.get("ARC_COMP_DIR", "/kaggle/input/competitions/arc-prize-2026-arc-agi-2") + "/arc-agi_evaluation_challenges.json"
 
     with open(test_path, "r") as f:
         data = json.load(f)

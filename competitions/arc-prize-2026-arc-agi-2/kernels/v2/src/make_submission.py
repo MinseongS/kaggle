@@ -5,7 +5,7 @@ from arc_decoder import ArcDecoder
 
 rerun_mode = os.getenv("KAGGLE_IS_COMPETITION_RERUN")
 
-comp_dir = "/kaggle/input/competitions/arc-prize-2026-arc-agi-2"
+comp_dir = os.environ.get("ARC_COMP_DIR", "/kaggle/input/competitions/arc-prize-2026-arc-agi-2")
 if rerun_mode:
     data = ArcDataset.from_file(f"{comp_dir}/arc-agi_test_challenges.json")
 else:

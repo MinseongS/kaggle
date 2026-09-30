@@ -337,7 +337,7 @@ def worker(rank, queue, end_time):
     max_seq_length = 8192
 
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name="/kaggle/input/models/sorokin/qwen3_4b_grids15_sft139/transformers/bfloat16/1",
+        model_name=os.environ.get("ARC_MODEL_DIR", "/kaggle/input/models/sorokin/qwen3_4b_grids15_sft139/transformers/bfloat16/1"),
         full_finetuning=False,
         load_in_4bit=False,
         local_files_only=True,
@@ -366,9 +366,9 @@ def worker(rank, queue, end_time):
     max_score = -np.log(0.2)
 
     if rerun_mode:
-        test_path = "/kaggle/input/competitions/arc-prize-2026-arc-agi-2/arc-agi_test_challenges.json"
+        test_path = os.environ.get("ARC_COMP_DIR", "/kaggle/input/competitions/arc-prize-2026-arc-agi-2") + "/arc-agi_test_challenges.json"
     else:
-        test_path = "/kaggle/input/competitions/arc-prize-2026-arc-agi-2/arc-agi_evaluation_challenges.json"
+        test_path = os.environ.get("ARC_COMP_DIR", "/kaggle/input/competitions/arc-prize-2026-arc-agi-2") + "/arc-agi_evaluation_challenges.json"
 
     arc_test_set = ArcDataset.from_file(test_path)
 

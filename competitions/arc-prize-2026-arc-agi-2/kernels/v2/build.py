@@ -32,6 +32,18 @@ cells = [
     code("import os, time\n"
          "rerun = os.getenv('KAGGLE_IS_COMPETITION_RERUN')\n"
          f"global_end_time = time.time() + (12 * 3600 - 600 if rerun else {args.eval_hours if args.eval else 12} * 3600 - 600)"),
+    # v2's first commit runs died with FileNotFoundError on the hard-coded competition path (v1 worked a day
+    # earlier), so locate inputs by filename under /kaggle/input and hand them to the scripts via env vars.
+    code("import os, glob\n"
+         "!ls /kaggle/input /kaggle/input/* | head -50\n"
+         "def _find(pattern):\n"
+         "    hits = sorted(glob.glob('/kaggle/input/**/' + pattern, recursive=True), key=len)\n"
+         "    return hits[0] if hits else None\n"
+         "f = _find('arc-agi_test_challenges.json')\n"
+         "if f: os.environ['ARC_COMP_DIR'] = os.path.dirname(f)\n"
+         "f = _find('qwen3_4b_grids15_sft139/**/config.json')\n"
+         "if f: os.environ['ARC_MODEL_DIR'] = os.path.dirname(f)\n"
+         "print('ARC_COMP_DIR', os.environ.get('ARC_COMP_DIR'), 'ARC_MODEL_DIR', os.environ.get('ARC_MODEL_DIR'))"),
     code("!pip uninstall -y tensorflow"),
     writefile("arc_loader.py"),
     writefile("arc_decoder.py"),
