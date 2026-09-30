@@ -28,10 +28,14 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "kkit" },
+    { name = "scikit-learn" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "kkit", editable = "../../libs/kkit" }]
+requires-dist = [
+    { name = "kkit", editable = "../../libs/kkit" },
+    { name = "scikit-learn", specifier = ">=1.9.1" },
+]
 
 [[package]]
 name = "joblib"
