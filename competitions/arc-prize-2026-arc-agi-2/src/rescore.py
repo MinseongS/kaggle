@@ -56,7 +56,9 @@ def load_candidates(path, max_pass=None, aug_k=None):
     out = {}
     for bk, cands in by_key.items():
         lst = []
+        n_passes = len(set().union(*(c["passes"] for c in cands.values())))
         for c in cands.values():
+            c["n_pp"] = len(c["views"]) / n_passes  # votes per pass: pass-2 re-solves would otherwise double n
             c["n"] = len(c["views"])
             c["aug_mean"] = float(np.mean(c["views"]))
             c["aug_min"] = float(np.min(c["aug"]))
@@ -116,6 +118,7 @@ def single_rules():
     r = {
         "kgmon (n - aug)": lambda c: c["n"] - c["aug_mean"],
         "probmul_3": lambda c: sum(3 - b for b in c["beam"]) + (3 - c["aug_mean"]) * len(c["aug"]),
+        "kgmon per-pass (n/passes - aug)": lambda c: c["n_pp"] - c["aug_mean"],
         "aug only": lambda c: -c["aug_mean"],
         "n only (+aug tiebreak)": lambda c: c["n"] - 1e-3 * c["aug_mean"],
         "n - aug - beam_min": lambda c: c["n"] - c["aug_mean"] - c["beam_min"],
@@ -234,7 +237,7 @@ def main():
     for name, rule in rules.items():
         report(name, evaluate(cands, solutions, pick_single(rule)))
     print()
-    for n2 in ("aug only", "n only (+aug tiebreak)", "kgmon + colors", "1.0*log(n) - aug", "probmul_3"):
+    for n2 in ("kgmon per-pass (n/passes - aug)", "aug only", "n only (+aug tiebreak)", "kgmon + colors", "1.0*log(n) - aug", "probmul_3"):
         report(f"a1=kgmon, a2={n2}", evaluate(cands, solutions, pick_split(kg, rules[n2])))
     print()
     for C in (0.03, 0.3, 3.0):
