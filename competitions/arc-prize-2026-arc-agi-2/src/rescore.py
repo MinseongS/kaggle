@@ -237,6 +237,9 @@ def main():
     for name, rule in rules.items():
         report(name, evaluate(cands, solutions, pick_single(rule)))
     print()
+    pp = rules["kgmon per-pass (n/passes - aug)"]
+    for n2 in ("aug only", "0.5*log(n) - aug", "probmul_3", "n - aug_max"):
+        report(f"a1=per-pass, a2={n2}", evaluate(cands, solutions, pick_split(pp, rules[n2])))
     for n2 in ("kgmon per-pass (n/passes - aug)", "aug only", "n only (+aug tiebreak)", "kgmon + colors", "1.0*log(n) - aug", "probmul_3"):
         report(f"a1=kgmon, a2={n2}", evaluate(cands, solutions, pick_split(kg, rules[n2])))
     print()
