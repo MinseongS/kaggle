@@ -209,7 +209,8 @@ def resume(tag='exp000'):
 def collect(tag='exp000'):
     import glob
     S = {}
-    for f in sorted(glob.glob(str(sdir(tag) / 'ice_done_*.json'))) + sorted(glob.glob(str(sdir(tag) / 'ice_out_*.json'))):
+    files = sorted(glob.glob(str(sdir(tag) / 'ice_done_*.json'))) + sorted(glob.glob(str(sdir(tag) / 'ice_out_*.json')))
+    for f in [f for f in files if not f.endswith('.meta.json')]:   # runner writes ice_out_<i>.json.meta.json too
         for mid, d in json.load(open(f)).items():
             if int(mid) not in S or any(v is not None for v in d.values()):
                 S[int(mid)] = d
