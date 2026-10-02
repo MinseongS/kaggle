@@ -20,6 +20,7 @@ from contextlib import redirect_stdout, redirect_stderr
 from peft import get_peft_model_state_dict, set_peft_model_state_dict
 
 import bz2
+import re
 import json
 import pickle
 import traceback
@@ -62,6 +63,13 @@ LORA_SEED = 42 if ARC_PASS == 1 else 42 + 1000 * ARC_PASS
 TRAIN_AUG_SEED = 1 if ARC_PASS == 1 else 1 + 1000 * ARC_PASS
 EVAL_AUG_SEED = 2 if ARC_PASS == 1 else 2 + 1000 * ARC_PASS
 OUTPUT_SUFFIX = "" if ARC_PASS == 1 else f".p{ARC_PASS}"
+# Eval-only sidecar scorers (ARC_CO_SCORE=1), written to DIR_EXTRA which the decoder never reads:
+#   base     : every candidate re-scored by the SFT model with the TTT adapter disabled (8 aug views)
+#   adapterN : in pass N>1, pass-1 candidates re-scored by pass N's adapter (SCORE_AUG_N colour perms)
+# Each candidate is otherwise only judged by the adapter that produced it; these let rescore.py test
+# cross-model scoring on fixed candidates.
+CO_SCORE = os.getenv("ARC_CO_SCORE", "0") == "1"
+DIR_EXTRA = "/kaggle/inference_extra"
 
 
 class UnslothFixedTrainer(UnslothTrainer):
@@ -225,6 +233,20 @@ def inference_turbo_dfs(model, prefix_tokens, max_new_tokens, max_score, end_tim
         sorted_beams = sorted(beams, key=lambda x:x[0])
         result.append((batch_id, sorted_beams))
     return result
+
+
+def aug_nll(puzzle_ds_multi, bk, solution, n_aug, formatter, tokenizer, model, max_seq_length, max_new_tokens):
+    """NLL of `solution` under 8*n_aug augmented views (same seeds as the main candidate scoring)."""
+    aug_dataset = ArcDataset(keys=[bk], queries={bk: puzzle_ds_multi.queries.get(bk)}, replies={bk: [solution.tolist()]})
+    aug_dataset = aug_dataset.augment(n=n_aug, seed=zlib.crc32(bk.encode()) % 1024**2)
+    aug_dataset = aug_dataset.cut_to_len(formatter=formatter, name="input", max_len=max_seq_length-max_new_tokens)
+    samples = aug_dataset.as_list(formatter)
+    queries = [x["input"] for x in samples]
+    answers = [x["reply"] for x in samples]
+    scores = []
+    for j in range(0, len(queries), 4):
+        scores += calc_scores(queries[j:j+4], answers[j:j+4], tokenizer, model)
+    return scores
 
 
 @torch.no_grad()
@@ -549,6 +571,38 @@ def solve_task(rank, key, model, tokenizer, collator, formatter, default_weights
                     if len(decoded_result):
                         with bz2.BZ2File(os.path.join(dir_outputs, subkey + OUTPUT_SUFFIX), "w") as f:
                             pickle.dump(decoded_result, f)
+
+            if CO_SCORE and known_scores and time.time() - start_time < 1200 and end_time - time.time() > 600:
+                t_extra = time.time()
+                extra = []
+                try:
+                    if ARC_PASS > 1:
+                        seen = set(known_scores)
+                        for name in sorted(os.listdir(dir_outputs)):
+                            if not name.startswith(key + "_") or re.search(r"\.p\d+$", name):
+                                continue
+                            with bz2.BZ2File(os.path.join(dir_outputs, name)) as f:
+                                for smp in pickle.load(f):
+                                    gid = (name.split(".")[0], tuple(map(tuple, smp["solution"])))
+                                    if gid in seen:
+                                        continue
+                                    seen.add(gid)
+                                    extra.append({"bk": gid[0], "solution": smp["solution"], "kind": f"adapter{ARC_PASS}",
+                                                  "score_aug": aug_nll(puzzle_ds_multi, gid[0], smp["solution"], SCORE_AUG_N, formatter,
+                                                                       tokenizer, model, max_seq_length, max_new_tokens)})
+                    with model.disable_adapter():
+                        for (bk_, grid) in list(known_scores):
+                            sol = np.array(grid)
+                            extra.append({"bk": bk_, "solution": sol, "kind": "base",
+                                          "score_aug": aug_nll(puzzle_ds_multi, bk_, sol, 1, formatter,
+                                                               tokenizer, model, max_seq_length, max_new_tokens)})
+                except Exception:
+                    print(f"[Rank {rank}] extra scoring failed for {key}\n{traceback.format_exc()}")
+                if extra:
+                    os.makedirs(DIR_EXTRA, exist_ok=True)
+                    with bz2.BZ2File(os.path.join(DIR_EXTRA, key + OUTPUT_SUFFIX + ".extra"), "w") as f:
+                        pickle.dump(extra, f)
+                print(f"[Rank {rank}] extra scores for {key}: {len(extra)} in {time.time() - t_extra:.1f}s")
 
         memory_allocated = torch.cuda.max_memory_allocated() // 1024**2
         print(f"[Rank {rank}] allocated {memory_allocated}MB for inference")

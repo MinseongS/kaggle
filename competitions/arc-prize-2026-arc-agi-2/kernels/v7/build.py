@@ -7,6 +7,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--eval", action="store_true",
                 help="separate kernel whose commit run solves all 120 eval tasks (local CV); not for submission")
 ap.add_argument("--min-prob", type=float, default=0.2, help="DFS threshold (ARC_MIN_PROB)")
+ap.add_argument("--co-score", action="store_true", help="eval sidecar scorers: base model + cross-adapter (ARC_CO_SCORE=1)")
 ap.add_argument("--eval-hours", type=float, default=6.0,
                 help="commit-run budget; 6h for 120 tasks matches the rerun's ~11.8h for 240")
 args = ap.parse_args()
@@ -26,7 +27,7 @@ def writefile(name):
 
 cells = [
     {"cell_type": "markdown", "metadata": {}, "source": (
-        "# ARC26 NVARC v7 — v6 + DFS probability threshold via ARC_MIN_PROB\n"
+        "# ARC26 NVARC v7 — v6 + DFS threshold (ARC_MIN_PROB) + eval sidecar co-scoring (base model, cross-adapter)\n"
         "NVARC 2025 (via the public LB33.89 perfpatch notebook) with: crc32 scoring seeds + PYTHONHASHSEED,\n"
         "per-task exception handling, TTT deadline guard, cheap-first task order, identity fallback for empty outputs.\n"
         "Pass 2 spends leftover time re-solving the lowest vote-margin tasks with new seeds; votes are pooled by score_kgmon.")},
@@ -50,7 +51,7 @@ cells = [
     writefile("arc_decoder.py"),
     writefile("arc_solver.py"),
     writefile("starter.py"),
-    code(f"import os\nos.environ['ARC_MIN_PROB'] = '{args.min_prob}'"),
+    code(f"import os\nos.environ['ARC_MIN_PROB'] = '{args.min_prob}'\nos.environ['ARC_CO_SCORE'] = '{int(args.co_score)}'"),
     code("import os\nos.environ.setdefault('ARC_EVAL_KEYS', '" + ("all" if args.eval else "debug") + "')\n"
          "!PYTHONHASHSEED=0 UNSLOTH_DISABLE_STATISTICS=1 TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas OMP_NUM_THREADS=12 "
          "python starter.py --end-time {global_end_time}"),

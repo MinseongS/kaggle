@@ -52,3 +52,7 @@ if not rerun_mode:
     with tarfile.open("/kaggle/working/inference_outputs.tar", "w") as tar:
         tar.add("/kaggle/inference_outputs", arcname="inference_outputs")
     print("*** saved inference_outputs.tar:", os.path.getsize("/kaggle/working/inference_outputs.tar") // 1024, "KB")
+    if os.path.isdir("/kaggle/inference_extra"):
+        with tarfile.open("/kaggle/working/inference_extra.tar", "w") as tar:
+            tar.add("/kaggle/inference_extra", arcname="inference_extra")
+        print("*** saved inference_extra.tar:", os.path.getsize("/kaggle/working/inference_extra.tar") // 1024, "KB")
