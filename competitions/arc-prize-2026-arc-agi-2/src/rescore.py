@@ -26,7 +26,7 @@ import numpy as np
 DATA = os.path.join(os.path.dirname(__file__), "..", "data")
 
 
-def load_candidates(path, max_pass=None, aug_k=None):
+def load_candidates(path, max_pass=None, aug_k=None, max_beam=None):
     """-> {basekey: [candidate dict]}"""
     with tempfile.TemporaryDirectory() as tmp:
         if path.endswith(".tar"):
@@ -45,6 +45,8 @@ def load_candidates(path, max_pass=None, aug_k=None):
                 samples = pickle.load(f)
             bk = name.split(".")[0]
             for s in samples:
+                if max_beam is not None and s["beam_score"] > max_beam:
+                    continue  # e.g. -log(0.2): rebuild the p>=0.2 DFS candidate set from a lower-threshold run
                 grid = np.asarray(s["solution"])
                 h = (grid.shape, grid.tobytes())
                 c = by_key[bk].setdefault(h, {"grid": grid, "aug": None, "views": [], "beam": [], "passes": set()})
@@ -120,6 +122,7 @@ def single_rules():
         "probmul_3": lambda c: sum(3 - b for b in c["beam"]) + (3 - c["aug_mean"]) * len(c["aug"]),
         "kgmon per-pass (n/passes - aug)": lambda c: c["n_pp"] - c["aug_mean"],
         "aug only": lambda c: -c["aug_mean"],
+        "v6 score_aug": lambda c: 0.05 * c["n_pp"] - c["aug_mean"],
         "n only (+aug tiebreak)": lambda c: c["n"] - 1e-3 * c["aug_mean"],
         "n - aug - beam_min": lambda c: c["n"] - c["aug_mean"] - c["beam_min"],
         # colors_ok: gold never violates it (0/172 eval, 0/1076 training outputs) -> hard penalty.
@@ -208,11 +211,12 @@ def main():
     ap.add_argument("path", help="inference_outputs.tar or directory of pickles")
     ap.add_argument("--max-pass", type=int, default=None, help="only use candidates from passes <= this")
     ap.add_argument("--aug-k", type=int, default=None, help="use only the first k of the 8 aug NLLs (value of more augs)")
+    ap.add_argument("--min-prob", type=float, default=None, help="drop beams with p < this (paired check of a lower DFS threshold)")
     args = ap.parse_args()
 
     solutions = json.load(open(os.path.join(DATA, "arc-agi_evaluation_solutions.json")))
     challenges = json.load(open(os.path.join(DATA, "arc-agi_evaluation_challenges.json")))
-    cands = load_candidates(args.path, args.max_pass, args.aug_k)
+    cands = load_candidates(args.path, args.max_pass, args.aug_k, -math.log(args.min_prob) if args.min_prob else None)
     add_priors(cands, challenges)
     for lst in cands.values():
         feature_rows(lst)
