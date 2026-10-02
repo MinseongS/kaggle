@@ -54,10 +54,25 @@ def score_kgmon(guesses):
     return [o for _, o in sorted(scored, key=lambda x: x[0], reverse=True)]
 
 
+def score_aug(guesses):
+    """Rank candidates by mean augmented NLL; votes (per pass) only break near-ties (0.05 per vote).
+    Eval (paired, same candidates): >= kgmon on all 6 run/subset combinations, +2.0 (run v3) / +0.5 (run v5),
+    +3.5 when two runs are pooled -- kgmon over-trusts vote counts, which pass-2 re-solves and pooling inflate."""
+    n_passes = len({_pass_of(k) for k in guesses}) or 1
+    scores = {}
+    for g in guesses.values():
+        h = hashable(g["solution"])
+        x = scores[h] = scores.get(h, [[], g["solution"]])
+        x[0].append(g)
+    scored = [(0.05 * len(sc) / n_passes - np.mean([np.mean(g["score_aug"]) for g in sc]), o) for sc, o in scores.values()]
+    return [o for _, o in sorted(scored, key=lambda x: x[0], reverse=True)]
+
+
 selection_algorithms = [
     score_full_probmul_3,
     score_kgmon_raw,
     score_kgmon,
+    score_aug,
 ]
 
 
@@ -77,8 +92,8 @@ class ArcDecoder:
             for i, sample in enumerate(outputs):
                 self.decoded_results[base_key][f"{key}{run_name}.out{i}"] = sample
 
-    # Default back to plain kgmon: the per-pass variant was +1 on eval v3 but -1 on eval v5 (net 0), so not adopted.
-    def run_selection_algo(self, selection_algorithm=score_kgmon_raw):
+    def run_selection_algo(self, selection_algorithm=None):
+        selection_algorithm = selection_algorithm or score_aug
         return {bk: selection_algorithm({k: g for k, g in v.items()}) for bk, v in self.decoded_results.items()}
 
     def benchmark_selection_algos(self):

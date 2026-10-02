@@ -25,7 +25,7 @@ def writefile(name):
 
 cells = [
     {"cell_type": "markdown", "metadata": {}, "source": (
-        "# ARC26 NVARC v6 — v2 + 16 augmented views for candidate re-scoring (plain kgmon)\n"
+        "# ARC26 NVARC v6 — v2 + 16 augmented views for re-scoring + select by augmented NLL (votes as tie-break)\n"
         "NVARC 2025 (via the public LB33.89 perfpatch notebook) with: crc32 scoring seeds + PYTHONHASHSEED,\n"
         "per-task exception handling, TTT deadline guard, cheap-first task order, identity fallback for empty outputs.\n"
         "Pass 2 spends leftover time re-solving the lowest vote-margin tasks with new seeds; votes are pooled by score_kgmon.")},
