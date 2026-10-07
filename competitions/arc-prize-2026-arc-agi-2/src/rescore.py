@@ -26,7 +26,7 @@ import numpy as np
 DATA = os.path.join(os.path.dirname(__file__), "..", "data")
 
 
-def load_candidates(path, max_pass=None, aug_k=None, max_beam=None):
+def load_candidates(path, max_pass=None, aug_k=None, max_beam=None, keep_view=None):
     """-> {basekey: [candidate dict]}"""
     with tempfile.TemporaryDirectory() as tmp:
         if path.endswith(".tar"):
@@ -40,6 +40,8 @@ def load_candidates(path, max_pass=None, aug_k=None, max_beam=None):
             m = re.search(r"\.p(\d+)$", name)
             n_pass = int(m.group(1)) if m else 1
             if max_pass and n_pass > max_pass:
+                continue
+            if keep_view is not None and not keep_view(name):
                 continue
             with bz2.BZ2File(os.path.join(root, name)) as f:
                 samples = pickle.load(f)
@@ -71,6 +73,20 @@ def load_candidates(path, max_pass=None, aug_k=None, max_beam=None):
             lst.append(c)
         out[bk] = lst
     return out
+
+
+def view_filter(n_perms, eval_seed=2):
+    """Filename predicate: view (transform + colour perm, ignoring example order) is in augment(n=n_perms)."""
+    import sys, types
+    sys.modules.setdefault("transformers", types.SimpleNamespace(AutoTokenizer=None))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "kernels", "v8", "src"))
+    from arc_loader import ArcDataset
+    ds = ArcDataset.from_file(os.path.join(DATA, "arc-agi_evaluation_challenges.json"))
+    strip = lambda k: re.sub(r"\.ex\d+$", "", re.sub(r"\.p\d+$", "", k))
+    keep = set()
+    for key in ds.keys:
+        keep |= {strip(k) for k in ds.change_keys([key]).split_multi_replies().augment(n=n_perms, seed=eval_seed).keys}
+    return lambda name: strip(name) in keep
 
 
 def add_priors(cands, challenges):
@@ -212,11 +228,15 @@ def main():
     ap.add_argument("--max-pass", type=int, default=None, help="only use candidates from passes <= this")
     ap.add_argument("--aug-k", type=int, default=None, help="use only the first k of the 8 aug NLLs (value of more augs)")
     ap.add_argument("--min-prob", type=float, default=None, help="drop beams with p < this (paired check of a lower DFS threshold)")
+    ap.add_argument("--decode-perms", type=int, default=None,
+                    help="keep only views whose (transform, colour perm) belong to the first N colour perms "
+                         "(v8 decodes 3; --decode-perms 2 rebuilds the 16-view baseline of the same run)")
     args = ap.parse_args()
 
     solutions = json.load(open(os.path.join(DATA, "arc-agi_evaluation_solutions.json")))
     challenges = json.load(open(os.path.join(DATA, "arc-agi_evaluation_challenges.json")))
-    cands = load_candidates(args.path, args.max_pass, args.aug_k, -math.log(args.min_prob) if args.min_prob else None)
+    keep = view_filter(args.decode_perms) if args.decode_perms else None
+    cands = load_candidates(args.path, args.max_pass, args.aug_k, -math.log(args.min_prob) if args.min_prob else None, keep)
     add_priors(cands, challenges)
     for lst in cands.values():
         feature_rows(lst)
