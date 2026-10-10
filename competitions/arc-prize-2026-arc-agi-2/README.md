@@ -11,7 +11,7 @@ https://www.kaggle.com/competitions/arc-prize-2026-arc-agi-2
 | Public/Private | 서로 **다른** 120 task 씩 (hidden 240개). 제출 1회에 함께 채점 |
 | 메달 지급 | 예 |
 | 팀 수 / 메달 컷 (9/28 public) | 2226팀 / 금 33.47, 은 32.22, 동 31.53 |
-| Best local eval / Public | eval 은 누수로 신뢰 낮음 / public 30.28 (v2) |
+| Best local eval / Public | eval 은 누수로 신뢰 낮음 / public 30.69 (v8) |
 
 ## 전략
 [research/00-strategy.md](research/00-strategy.md)
