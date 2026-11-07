@@ -1,1 +1,24 @@
-[]
+[
+  {
+    "exp": "exp015",
+    "kernel": "mins00/casmi26-poplam20",
+    "version": 1,
+    "msg": "exp015: public 0.480 fork, PubChem channel order lam 0.20 (sim2 CV), gate S lam 0.15",
+    "file": "submission.csv",
+    "state": "submitted",
+    "queued_utc": "2026-11-06 02:35",
+    "last_status": "COMPLETE",
+    "submitted_utc": "2026-11-06 14:31"
+  },
+  {
+    "exp": "exp016",
+    "kernel": "mins00/casmi26-poplam20b",
+    "version": 1,
+    "msg": "exp016: exp015 + order prior syn 1.0, np 1.5 (sim2 CV), gate public",
+    "file": "submission.csv",
+    "state": "submitted",
+    "queued_utc": "2026-11-06 02:36",
+    "last_status": "COMPLETE",
+    "submitted_utc": "2026-11-06 14:31"
+  }
+]

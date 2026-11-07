@@ -13,3 +13,10 @@ cd /Users/minseong/project/kaggle
 caffeinate -i claude -p --dangerously-skip-permissions \
   "enveda-CASMI26 대회 일일 자동 실행이다 (시각 $TS KST). competitions/enveda-CASMI26-molecule-id-mass-spectra/DAILY.md 의 절대 규칙과 절차를 그대로 따라라. 작업 목록은 같은 폴더의 QUEUE.md. 리포트는 competitions/enveda-CASMI26-molecule-id-mass-spectra/outputs/daily/report-$TS.md 에 써라." \
   > $LOGDIR/run-$TS.log 2>&1
+RC=$?
+# alert the user when a run fails (auth expiry, crash, no report) — otherwise silent failures go unnoticed
+LOG=$LOGDIR/run-$TS.log
+if [[ $RC -ne 0 ]] || grep -qiE "invalid api key|not logged in|please run /login|authentication_error" $LOG || [[ ! -f $LOGDIR/report-$TS.md ]]; then
+  echo "$TS FAILED rc=$RC" >> $LOGDIR/failures.log
+  osascript -e "display notification \"자동 실행 실패 ($TS). outputs/daily/run-$TS.log 확인\" with title \"CASMI26\" sound name \"Basso\""
+fi
