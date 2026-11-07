@@ -1,0 +1,14 @@
+{
+  "id": "mins00/ntl-lite",
+  "title": "ntl-lite",
+  "code_file": "ntl-lite.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": false,
+  "dataset_sources": ["crtproduction/name-that-llm-open-pool"],
+  "competition_sources": ["name-that-llm"],
+  "kernel_sources": [],
+  "model_sources": []
+}
