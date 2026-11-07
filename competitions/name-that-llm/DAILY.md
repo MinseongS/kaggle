@@ -14,6 +14,7 @@ Kaggle 제출 한도(하루 5회)는 00:00 UTC = 09:00 KST에 초기화된다. �
 ## 매 실행 절차
 0. **지시와 점검 먼저**
    - `DIRECTIVES.md`를 읽는다. 사용자 지시는 여기 누적돼 있고, 이 매뉴얼보다 최신 지시가 우선한다.
+   - `insights/PROTOCOL.md` "읽기" 절을 따른다 (유형: nlp-llm).
    - `cd competitions/name-that-llm && uv run python src/health.py` → 경고 목록을 이번 실행의 우선 과제로 삼는다.
 1. **상태 수집**
    - `kaggle competitions submissions name-that-llm` → 새로 나온 점수를 `EXPERIMENTS.md`의 해당 행 LB 칸에 기록 (pending → 점수). CV와의 차이도 메모.
@@ -40,6 +41,7 @@ Kaggle 제출 한도(하루 5회)는 00:00 UTC = 09:00 KST에 초기화된다. �
    - 오늘 제출한 것과 이유, 진행한 로컬 실험 결과
    - 문제나 사용자 확인이 필요한 일
    - `README.md`의 Best CV / LB 줄도 갱신.
+   - `insights/PROTOCOL.md` "쓰기" 절: 해당 사항이 있을 때만 `insights/inbox/name-that-llm.md` 에 한 줄.
 
 6. **메커니즘 점검과 개선** (매 실행 마지막, 10분 이내)
    - 질문: 이번 실행이 점수를 올리는 데 실제로 기여했나? 한도를 낭비하거나, 같은 실패를 반복하거나, 기다리기만 한 곳이 있었나?

@@ -1,5 +1,7 @@
 # Tabular
-- 기본기: GBDT 3종 (LightGBM / XGBoost / CatBoost) + target/count encoding + 집계 feature
-- 강한 신호는 feature engineering에서 나온다. 모델 튜닝은 마지막에.
-- 시계열이면 시간 분할 CV, 누수(lag feature 계산 시점) 주의
-- 마무리: 다양한 모델 OOF로 hill climbing 또는 ridge stacking
+
+형식은 `../CURATOR.md`. 조건이 맞을 때만 쓰고 가설로 등록해 CV로 판정한다. 모델이 기본으로 하는 일반론(입장 테스트 탈락)은 넣지 않는다.
+
+## 확정
+
+## 후보

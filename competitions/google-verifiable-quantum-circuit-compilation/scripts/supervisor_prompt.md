@@ -5,6 +5,7 @@
 2. `uv run python scripts/healthcheck.py` 를 실행한 결과 (`outputs/ops/status.md`), `outputs/ops/history.tsv` 최근 14줄
 3. `OPS_LOG.md` 최근 항목, `RESEARCH.md`, `EXPERIMENTS.md` 최근 20줄
 4. `outputs/harvest/harvest.log` 최근 80줄, Orca 실행 기록: `orca automations runs --id <id> --json` (수집·제출 84d89b67-4116-42c0-8e23-4d5a51ec6485, 밤 연구 1440a468-bdcf-4ea4-b004-c01e8d72535f, 아침 감독 9e75896d-609b-4ab7-9cb1-a8f9f69cbcac) 의 최근 run 의 status 와 outputSnapshot
+5. `../../insights/PROTOCOL.md` (유형: agent-sim). 운영·메커니즘 교훈 중 다른 대회에도 통할 것은 OPS_LOG 와 별도로 `../../insights/inbox/google-verifiable-quantum-circuit-compilation.md` 에 한 줄 (형식은 PROTOCOL "쓰기" 절).
 
 점검 질문:
 - 수집(harvest)·연구(research)·감독(supervisor)이 예정대로 돌았나? 실패했다면 원인을 찾아 고친다.

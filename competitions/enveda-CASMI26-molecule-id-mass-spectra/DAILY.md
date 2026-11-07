@@ -19,6 +19,7 @@ Kaggle 제출 한도(하루 5회)는 00:00 UTC = 09:00 KST 에 초기화된다. 
 
 ## 매 실행 절차
 0. **지시 확인**: `DIRECTIVES.md` 를 읽는다. "받은 편지함" 에 새 지시가 있으면 절차·QUEUE·도구에 반영하고 "반영됨" 으로 옮긴다 (반영 위치를 적는다). 이 파일의 지시는 이 매뉴얼의 절차보다 우선한다 (절대 규칙은 예외).
+   - `insights/PROTOCOL.md` "읽기" 절을 따른다 (유형: science).
 1. **상태 수집**: `uv run python -m casmi.daily status` 를 먼저 실행한다. 이 스크립트가
    - 새로 나온 제출 점수를 `EXPERIMENTS.md` 의 해당 행 LB 칸에 기록 (제출 메시지 앞의 `expNNN` 으로 매칭, `대기` → 점수)
    - 오늘(UTC) 사용한 제출 수, 리더보드 금/은/동 경계와 내 순위를 `automation/lb_history.csv` 에 기록
@@ -47,6 +48,7 @@ Kaggle 제출 한도(하루 5회)는 00:00 UTC = 09:00 KST 에 초기화된다. 
    - 메커니즘 점검 결과 (🟥 항목과 조치, CHANGELOG 에 추가한 것)
    - 문제나 사용자 확인이 필요한 일
    - `README.md` 의 Best CV / LB 줄과 메달 컷 줄도 갱신.
+   - `insights/PROTOCOL.md` "쓰기" 절: 해당 사항이 있을 때만 `insights/inbox/enveda-CASMI26-molecule-id-mass-spectra.md` 에 한 줄.
 
 ## CV 하네스 (현재 상태)
 - `casmi.panel_stack`: panel 250분자 PubChem 채널 replay. **유명 천연물 편향으로 판별력 낮음** — prior 관련 변경의 근거로 단독 사용 금지.

@@ -5,9 +5,9 @@
 ## 구조
 - `competitions/<slug>/` — 대회별 **독립 uv 프로젝트** (각자 pyproject.toml / uv.lock). uv workspace로 묶지 않는다 (대회마다 torch 등 버전이 다름).
 - `libs/kkit/` — 공용 유틸. 대회 프로젝트에서 path(editable) 의존성으로 사용. 두 대회 이상에서 반복된 코드만 여기로 올린다.
-- `insights/` — 대회를 넘어서는 지식.
-  - `common.md`: 대회 종류와 무관한 원칙
-  - `playbooks/<type>.md`: 유형별 노하우 (tabular, cv, nlp-llm, agent-sim, science)
+- `insights/` — 대회를 넘어서는 지식. 대회 세션은 `PROTOCOL.md`(조건 맞는 것만 읽고 가설로 검증, 결과는 `inbox/<slug>.md`에 한 줄), 정제는 주간 큐레이터가 `CURATOR.md` 기준(입장 테스트·신뢰도 단계·상한·미사용 퇴출)으로 한다. `common.md`·playbook은 큐레이터 외에는 직접 고치지 않는다.
+  - `common.md`: 대회 종류와 무관한 인사이트
+  - `playbooks/<type>.md`: 유형별 인사이트 (tabular, cv, nlp-llm, agent-sim, science)
   - `solutions/<slug>.md`: 과거/종료 대회 상위 솔루션 요약
   - `postmortems/<slug>.md`: 내가 참가한 대회 회고
 - `templates/competition/` — 새 대회 템플릿. `scripts/new-comp.sh <slug>` 로 생성.

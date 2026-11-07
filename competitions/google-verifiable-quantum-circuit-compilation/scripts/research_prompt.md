@@ -2,6 +2,8 @@
 
 작업 폴더: 이 대회 폴더 (현재 디렉터리). 먼저 읽을 것: `DIRECTIVES.md` 전체(반드시 따른다), `outputs/ops/status.md`, `README.md`, `RESEARCH.md`, `EXPERIMENTS.md` 의 최근 20줄, `outputs/harvest/harvest.log` 의 최근 30줄.
 
+인사이트: `../../insights/PROTOCOL.md` 를 읽고 따른다 (유형: agent-sim). 끝낼 때 해당 사항이 있으면 `../../insights/inbox/google-verifiable-quantum-circuit-compilation.md` 에 한 줄.
+
 할 일:
 1. `HYPOTHESES.md` (2026-11-07~) 4절 우선순위에서 아직 판정되지 않은 가장 높은 가설 하나를 고른다 (전날 노트의 "다음 할 일" 이 그 가설의 다음 단계면 그것부터). `RESEARCH.md` 큐는 보조 자료다. 가설의 채택/기각 기준으로 판정하고 `HYPOTHESES.md` 5절 검증 로그에 한 줄 남긴다. 2절(기각·포화) 방향은 다시 하지 않는다.
 2. 작게 쪼개서 진행한다. 긴 계산은 백그라운드로 돌리고 기다리는 동안 다음 단계를 준비한다. 세션 시간은 약 5시간이다.

@@ -1,4 +1,7 @@
 # Computer Vision (의료 영상 포함)
-- backbone 비교는 작은 해상도, 짧은 epoch으로 → 좋은 것만 키운다
-- augmentation, 해상도, TTA가 큰 레버
-- 의료 영상(DICOM, 3D): 전처리(windowing, spacing)와 환자 단위 분할이 핵심
+
+형식은 `../CURATOR.md`. 조건이 맞을 때만 쓰고 가설로 등록해 CV로 판정한다. 모델이 기본으로 하는 일반론(입장 테스트 탈락)은 넣지 않는다.
+
+## 확정
+
+## 후보

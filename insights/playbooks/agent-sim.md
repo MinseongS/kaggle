@@ -1,5 +1,9 @@
-# Agent / Simulation / 최적화 (ConnectX, Lux, Santa, ARC, 게임 AI 등)
-- 평가가 LB 매칭(에이전트끼리 대결)이면 로컬 대결 환경 + Elo 측정부터 만든다
-- 규칙 기반 heuristic → 탐색(MCTS, beam) → 학습(imitation / RL) 순으로 쌓는다
-- 속도가 곧 점수: numba → C++(pybind11/nanobind) 순으로 최적화
-- Santa류 조합 최적화: 좋은 초기해 + local search / SA. C++ solver가 사실상 표준
+# Agent / Simulation / 최적화 (ConnectX, Lux, Santa, ARC, 회로 컴파일 등)
+
+형식은 `../CURATOR.md`. 조건이 맞을 때만 쓰고 가설로 등록해 CV로 판정한다. 모델이 기본으로 하는 일반론(입장 테스트 탈락)은 넣지 않는다.
+
+## 확정
+
+## 후보
+- [I-11] 조건: 에이전트끼리 대결하는 LB | 행동: 로컬 대결 환경과 함께 Elo 측정을 먼저 만들고, 제출 전 후보를 Elo로 거른다 | 근거: 외부 통념 (미검증) | 확인: 0 | 반례: 없음 | 등록: 2026-11-07 | 최근 사용:
+- [I-12] 조건: 조합 최적화(Santa류)에서 Python/numba local search 가 병목 | 행동: 초기에 C++ solver 로 옮긴다 (CLAUDE.md 규칙대로 numba 로 충분한지 먼저 측정) | 근거: 외부 통념 (미검증) | 확인: 0 | 반례: 없음 | 등록: 2026-11-07 | 최근 사용:
